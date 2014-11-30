@@ -1,0 +1,13 @@
+﻿<Application x:Class="mAgicTVViewerGT.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:app="clr-namespace:mAgicTVViewerGT"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+        <Style TargetType="{x:Type Popup}" x:Key="{x:Type Popup}">
+            <!-- スタイルに定義することでイベントの処理順の最初に来るようにする -->
+            <!-- Windows の Resource ではなく App.xaml でスタイル定義すること -->
+            <Setter Property="app:RibbonApplicationMenuPopupEventManager.FixPopup" Value="true"/>
+        </Style>
+    </Application.Resources>
+</Application>

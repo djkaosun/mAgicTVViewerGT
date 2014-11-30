@@ -1,0 +1,448 @@
+﻿<RibbonWindow x:Class="mAgicTVViewerGT.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:s="clr-namespace:System;assembly=mscorlib"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:properties="clr-namespace:mAgicTVViewerGT.Properties"
+        xmlns:my="clr-namespace:mAgicTVViewerGT"
+        xmlns:myvm="clr-namespace:mAgicTVViewerGT.ViewModel"
+        Title="mAgicTV ビューアー GT" Width="1024" Height="768" MinWidth="800" MinHeight="600"
+        Icon="pack://application:,,,/Resources/mtvGuide.ico"
+        PreviewMouseLeftButtonUp="RibbonWindow_PreviewMouseLeftButtonUp"
+        PreviewKeyDown="RibbonWindow_PreviewKeyDown"
+        >
+    <RibbonWindow.Resources>
+        <ControlTemplate x:Key="CustomTreeViewItemControlTemplate" TargetType="TreeViewItem">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" MinWidth="19" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+                <ToggleButton IsChecked="{Binding Path=IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}" ClickMode="Press" Name="Expander">
+                    <ToggleButton.Style>
+                        <Style TargetType="ToggleButton">
+                            <Style.Resources>
+                                <ResourceDictionary />
+                            </Style.Resources>
+                            <Setter Property="UIElement.Focusable" Value="False"/>
+                            <Setter Property="FrameworkElement.Width" Value="16"/>
+                            <Setter Property="FrameworkElement.Height" Value="16"/>
+                            <Setter Property="Control.Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border Padding="5,5,5,5" Background="#00FFFFFF" Width="16" Height="16">
+                                            <Path Fill="#00FFFFFF" Stroke="#FF989898" Name="ExpandPath">
+                                                <Path.Data>
+                                                    <PathGeometry Figures="M0,0L0,6L6,0z" />
+                                                </Path.Data>
+                                                <Path.RenderTransform>
+                                                    <RotateTransform Angle="135" CenterX="3" CenterY="3" />
+                                                </Path.RenderTransform>
+                                            </Path>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="ToggleButton.IsChecked" Value="True">
+                                                <Setter Property="UIElement.RenderTransform" TargetName="ExpandPath">
+                                                    <Setter.Value>
+                                                        <RotateTransform Angle="180" CenterX="3" CenterY="3" />
+                                                    </Setter.Value>
+                                                </Setter>
+                                                <Setter Property="Shape.Fill" TargetName="ExpandPath" Value="#FF595959"/>
+                                                <Setter Property="Shape.Stroke" TargetName="ExpandPath" Value="#FF262626"/>
+                                            </Trigger>
+                                            <Trigger Property="UIElement.IsMouseOver" Value="True">
+                                                <Setter Property="Shape.Stroke" TargetName="ExpandPath" Value="#FF1BBBFA"/>
+                                                <Setter Property="Shape.Fill" TargetName="ExpandPath" Value="#00FFFFFF"/>
+                                            </Trigger>
+                                            <MultiTrigger>
+                                                <MultiTrigger.Conditions>
+                                                    <Condition Property="UIElement.IsMouseOver" Value="True"/>
+                                                    <Condition Property="ToggleButton.IsChecked" Value="True"/>
+                                                </MultiTrigger.Conditions>
+                                                <Setter Property="Shape.Stroke" TargetName="ExpandPath" Value="#FF262626"/>
+                                                <Setter Property="Shape.Fill" TargetName="ExpandPath" Value="#FF595959"/>
+                                            </MultiTrigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </ToggleButton.Style>
+                </ToggleButton>
+                <Border BorderThickness="{TemplateBinding Border.BorderThickness}" Padding="{TemplateBinding Control.Padding}" BorderBrush="{TemplateBinding Border.BorderBrush}" Background="{TemplateBinding Panel.Background}" Name="Bd" SnapsToDevicePixels="True" Grid.Column="1">
+                    <ContentPresenter Content="{TemplateBinding HeaderedContentControl.Header}" ContentTemplate="{TemplateBinding HeaderedContentControl.HeaderTemplate}" ContentStringFormat="{TemplateBinding HeaderedItemsControl.HeaderStringFormat}" ContentSource="Header" Name="PART_Header" HorizontalAlignment="{TemplateBinding Control.HorizontalContentAlignment}" SnapsToDevicePixels="{TemplateBinding UIElement.SnapsToDevicePixels}" />
+                </Border>
+                <ItemsPresenter Name="ItemsHost" Grid.Column="1" Grid.Row="1"/>
+            </Grid>
+            <ControlTemplate.Triggers>
+                <MultiTrigger>
+                    <MultiTrigger.Conditions>
+                        <Condition Property="my:TreeViewHelper.IsMouseDirectlyOverItem" Value="True"/>
+                    </MultiTrigger.Conditions>
+                    <Setter Property="Panel.Background" TargetName="Bd" Value="#1F26A0DA"/>
+                    <Setter Property="Border.BorderBrush" TargetName="Bd" Value="#A826A0DA"/>
+                </MultiTrigger>
+                <Trigger Property="TreeViewItem.IsExpanded" Value="False">
+                    <Setter Property="UIElement.Visibility" TargetName="ItemsHost" Value="{x:Static Visibility.Collapsed}"/>
+                </Trigger>
+                <Trigger Property="ItemsControl.HasItems" Value="False">
+                    <Setter Property="UIElement.Visibility" TargetName="Expander" Value="{x:Static Visibility.Hidden}"/>
+                </Trigger>
+                <MultiTrigger>
+                    <MultiTrigger.Conditions>
+                        <Condition Property="TreeViewItem.IsSelected" Value="True"/>
+                        <Condition Property="Selector.IsSelectionActive" Value="True"/>
+                        <Condition Property="my:TreeViewHelper.IsMouseDirectlyOverItem" Value="False"/>
+                    </MultiTrigger.Conditions>
+                    <Setter Property="Panel.Background" TargetName="Bd" Value="#3D26A0DA"/>
+                    <Setter Property="Border.BorderBrush" TargetName="Bd" Value="#FF26A0DA"/>
+                </MultiTrigger>
+                <MultiTrigger>
+                    <MultiTrigger.Conditions>
+                        <Condition Property="TreeViewItem.IsSelected" Value="True"/>
+                        <Condition Property="Selector.IsSelectionActive" Value="False"/>
+                        <Condition Property="my:TreeViewHelper.IsMouseDirectlyOverItem" Value="False"/>
+                    </MultiTrigger.Conditions>
+                    <Setter Property="Panel.Background" TargetName="Bd" Value="#3DDADADA"/>
+                    <Setter Property="Border.BorderBrush" TargetName="Bd" Value="#FFDADADA"/>
+                </MultiTrigger>
+                <Trigger Property="UIElement.IsEnabled" Value="False">
+                    <Setter Property="TextElement.Foreground">
+                        <Setter.Value>
+                            <DynamicResource ResourceKey="{x:Static SystemColors.GrayTextBrushKey}" />
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+        <ControlTemplate x:Key="CustomListViewItemControlTemplate" TargetType="{x:Type ListBoxItem}">
+            <Border x:Name="Bd" BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}" 
+                                        Background="{TemplateBinding Background}" SnapsToDevicePixels="True">
+                <GridViewRowPresenter VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+            </Border>
+            <ControlTemplate.Triggers>
+                <MultiTrigger>
+                    <MultiTrigger.Conditions>
+                        <Condition Property="IsMouseOver"  Value="True"/>
+                    </MultiTrigger.Conditions>
+                    <Setter Property="Background" TargetName="Bd" Value="#1F26A0DA"/>
+                    <Setter Property="BorderBrush" TargetName="Bd" Value="#A826A0DA"/>
+                </MultiTrigger>
+                <MultiTrigger>
+                    <MultiTrigger.Conditions>
+                        <Condition Property="IsSelected" Value="True"/>
+                        <Condition Property="IsMouseOver" Value="False"/>
+                    </MultiTrigger.Conditions>
+                    <Setter Property="Background" TargetName="Bd" Value="#3D26A0DA"/>
+                    <Setter Property="BorderBrush" TargetName="Bd" Value="#FF26A0DA"/>
+                </MultiTrigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Foreground">
+                        <Setter.Value>
+                            <DynamicResource ResourceKey="{x:Static SystemColors.GrayTextBrushKey}" />
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </ControlTemplate.Triggers>
+        </ControlTemplate>
+    </RibbonWindow.Resources>
+    <Grid x:Name="LayoutRoot">
+        <Grid.CommandBindings>
+            <CommandBinding Command="Open" CanExecute="OpenCommandBinding_CanExecute"  Executed="OpenCommandBinding_Executed"/>
+            <CommandBinding Command="Close" CanExecute="CloseCommandBinding_CanExecute"  Executed="CloseCommandBinding_Executed"/>
+            <CommandBinding Command="Properties" CanExecute="PropertiesCommandBinding_CanExecute"  Executed="PropertiesCommandBinding_Executed"/>
+            <CommandBinding Command="New" CanExecute="NewCommandBinding_CanExecute"  Executed="NewCommandBinding_Executed"/>
+            <CommandBinding Command="SelectAll" CanExecute="SelectAllCommandBinding_CanExecute"  Executed="SelectAllCommandBinding_Executed"/>
+            <CommandBinding Command="{x:Static myvm:DataContextClass.NewOthers}" CanExecute="NewOthersCommandBinding_CanExecute"  Executed="NewOthersCommandBinding_Executed"/>
+            <CommandBinding Command="{x:Static myvm:DataContextClass.NewFolder}" CanExecute="NewFolderCommandBinding_CanExecute"  Executed="NewFolderCommandBinding_Executed"/>
+            <CommandBinding Command="{x:Static myvm:DataContextClass.MakeViewed}" CanExecute="MakeViewedCommandBinding_CanExecute"  Executed="MakeViewedCommandBinding_Executed"/>
+            <CommandBinding Command="{x:Static myvm:DataContextClass.MakeUnviewed}" CanExecute="MakeUnviewedCommandBinding_CanExecute"  Executed="MakeUnviewedCommandBinding_Executed"/>
+        </Grid.CommandBindings>
+        <Grid.DataContext>
+            <myvm:DataContextClass x:Name="dataContextClass"/>
+        </Grid.DataContext>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Ribbon Grid.Row="0">
+            <Ribbon.CommandBindings>
+                <CommandBinding Command="Open" CanExecute="OpenFolderCommandBinding_CanExecute" Executed="OpenFolderCommandBinding_Executed"/>
+            </Ribbon.CommandBindings>
+            <Ribbon.HelpPaneContent>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+                    <RibbonToggleButton Grid.Column="0"
+                                        IsChecked="{Binding Path=IsMinimized, Mode=TwoWay, RelativeSource={RelativeSource AncestorType=Ribbon}}" CheckedBackground="{x:Null}" CheckedBorderBrush="{x:Null}"
+                                        Focusable="False" FocusedBackground="{x:Null}" FocusedBorderBrush="{x:Null}"
+                                        >
+                        <RibbonToggleButton.Style>
+                            <Style TargetType="{x:Type RibbonToggleButton}">
+                                <Style.Triggers>
+                                    <Trigger Property="IsChecked" Value="True">
+                                        <Setter Property="SmallImageSource" Value="pack://application:,,,/Resources/Minimized.png"/>
+                                    </Trigger>
+                                    <Trigger Property="IsChecked" Value="False">
+                                        <Setter Property="SmallImageSource" Value="pack://application:,,,/Resources/Minimize.png"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </RibbonToggleButton.Style>
+                    </RibbonToggleButton>
+                    <RibbonButton Grid.Column="1"
+                                  SmallImageSource="pack://application:,,,/Resources/Help_S.png"
+                                  />
+                </Grid>
+            </Ribbon.HelpPaneContent>
+
+            <!--Ribbon.QuickAccessToolBar>
+                
+            </Ribbon.QuickAccessToolBar-->
+
+            <Ribbon.ApplicationMenu>
+                <RibbonApplicationMenu SmallImageSource="pack://application:,,,/Resources/Ribbon_AppMenuIcon.ico">
+                    <!--RibbonApplicationSplitMenuItem Header="{x:Static properties:Resources.Window_OpenFolder}"
+                                               ImageSource="pack://application:,,,/Resources/OpenDirectory_L.png"
+                                               QuickAccessToolBarImageSource="pack://application:,,,/Resources/OpenDirectory_S.png"
+                                               -->
+                        <RibbonApplicationMenuItem Header="{x:Static properties:Resources.Window_OpenFolder}"
+                                                   Command="Open"
+                                                   ImageSource="pack://application:,,,/Resources/OpenDirectory_L.png"
+                                                   QuickAccessToolBarImageSource="pack://application:,,,/Resources/OpenDirectory_S.png"
+                                               />
+                    <!--/RibbonApplicationSplitMenuItem-->
+                    <RibbonSeparator/>
+                    <RibbonApplicationMenuItem Header="{x:Static properties:Resources.Window_Help}"
+                                               ImageSource="pack://application:,,,/Resources/Help_L.png"
+                                               QuickAccessToolBarImageSource="pack://application:,,,/Resources/Help_S.png"
+                                               />
+                    <RibbonApplicationMenuItem Header="{x:Static properties:Resources.Window_VersionInfo}"
+                                               ImageSource="pack://application:,,,/Resources/VersionInfo_L.png"
+                                               QuickAccessToolBarImageSource="pack://application:,,,/Resources/VersionInfo_S.png"
+                                               />
+                    <RibbonSeparator/>
+                    <RibbonApplicationMenuItem Header="{x:Static properties:Resources.Window_Close}"
+                                               Command="Close"
+                                               ImageSource="pack://application:,,,/Resources/CloseWindow_L.png"
+                                               QuickAccessToolBarImageSource="pack://application:,,,/Resources/CloseWindow_S.png"
+                                               />
+                </RibbonApplicationMenu>
+            </Ribbon.ApplicationMenu>
+
+            <RibbonTab Header="{x:Static properties:Resources.Ribbon_HomeTab}" Margin="0">
+                <RibbonGroup Header="{x:Static properties:Resources.Ribbon_EnlargeReduce}">
+                    <RibbonButton Label="{x:Static properties:Resources.Ribbon_Enlarge}"
+                                  Command="{Binding ScaleUpCommand}"
+                                  LargeImageSource="pack://application:,,,/Resources/Enlarge_L.png"
+                                  SmallImageSource="pack://application:,,,/Resources/Enlarge_S.png"
+                                  />
+                    <RibbonButton Label="{x:Static properties:Resources.Ribbon_Reduce}"
+                                  Command="{Binding ScaleDownCommand}"
+                                  LargeImageSource="pack://application:,,,/Resources/Reduce_L.png"
+                                  SmallImageSource="pack://application:,,,/Resources/Reduce_S.png"
+                                  />
+                    <RibbonButton Label="{x:Static properties:Resources.Ribbon_100Percent}"
+                                  Command="{Binding ScaleResetCommand}"
+                                  LargeImageSource="pack://application:,,,/Resources/Actual_L.png"
+                                  SmallImageSource="pack://application:,,,/Resources/Actual_S.png"
+                                  />
+                </RibbonGroup>
+            </RibbonTab>
+        </Ribbon>
+
+        <Grid Grid.Row="1" x:Name="MainGrid">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="20*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="80*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.LayoutTransform>
+                <ScaleTransform CenterX="0" CenterY="0"
+                            ScaleX="{Binding Scale}"
+                            ScaleY="{Binding Scale}"/>
+            </Grid.LayoutTransform>
+
+            <Grid Grid.Column="0">
+                <TreeView x:Name="FilterTree" ItemsSource="{Binding Path=FilterTreeRoot, Mode=OneWay}"
+                          HorizontalContentAlignment="Stretch" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                          Background="{Binding CurrentColorSet.TreeViewBackground, Mode=OneWay}"
+                          Foreground="{Binding CurrentColorSet.TreeViewForeground, Mode=OneWay}"
+                          >
+                    <TreeView.CommandBindings>
+                        <CommandBinding Command="Delete" CanExecute="DeleteCommandBinding_CanExecute"  Executed="DeleteCommandBinding_Executed"/>
+                    </TreeView.CommandBindings>
+                    <TreeView.ItemContainerStyle>
+                        <Style TargetType="{x:Type TreeViewItem}">
+                            <Setter Property="IsSelected" Value="{Binding Path=IsSelected, Mode=TwoWay}"/>
+                            <Setter Property="IsExpanded" Value="{Binding Path=IsRoot, Mode=OneTime}"/>
+                            <Setter Property="AllowDrop" Value="True"/>
+                            <Setter Property="BorderThickness" Value="1"/>
+                            <Setter Property="Template" Value="{StaticResource CustomTreeViewItemControlTemplate}"/>
+                            <EventSetter Event="PreviewMouseLeftButtonDown"  Handler="treeViewItem_PreviewMouseLeftButtonDown" />
+                            <EventSetter Event="MouseMove"  Handler="treeViewItem_MouseMove" />
+                            <EventSetter Event="Drop"  Handler="treeViewItem_Drop" />
+                        </Style>
+                    </TreeView.ItemContainerStyle>
+                    <TreeView.ItemTemplate>
+                        <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                            <Grid HorizontalAlignment="Stretch">
+                                <Grid.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="{x:Static properties:Resources.Tree_Edit}" Command="Properties"/>
+                                        <MenuItem Header="{x:Static properties:Resources.Tree_Add}" Command="New">
+                                            <MenuItem.Icon>
+                                                <Image Source="/Resources/Filtrate.png" Width="16" Height="16"/>
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Header="{x:Static properties:Resources.Tree_AddOthers}" Command="{x:Static myvm:DataContextClass.NewOthers}">
+                                            <MenuItem.Icon>
+                                                <Image Source="/Resources/Resudue.png" Width="16" Height="16"/>
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Header="{x:Static properties:Resources.Tree_AddFolder}" Command="{x:Static myvm:DataContextClass.NewFolder}">
+                                            <MenuItem.Icon>
+                                                <Image Source="/Resources/Folder.png" Width="16" Height="16"/>
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Header="{x:Static properties:Resources.Tree_Delete}" Command="Delete"/>
+                                    </ContextMenu>
+                                </Grid.ContextMenu>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Image Grid.Column="0" Source="{Binding Icon, Mode=OneWay}" Width="16" Height="16" Margin="2"/>
+                                <TextBlock Grid.Column="1" Text="{Binding UnviewedNumberString, Mode=OneWay}"
+                                           FontSize="9" FontWeight="Bold" VerticalAlignment="Stretch" Margin="0,2,0,0" Foreground="#C0E04000"/>
+                                <my:CustomTextBlock Grid.Column="2" Text="{Binding Name, Mode=OneWay}"
+                                                    Foreground="{Binding Foreground, Mode=OneWay, RelativeSource={RelativeSource AncestorType=TreeView}}">
+                                    <my:CustomTextBlock.Style>
+                                        <Style TargetType="{x:Type my:CustomTextBlock}">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsTrimmed" Value="True">
+                                                    <Setter Property="ToolTip" Value="{Binding Path=Name}"/>
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </my:CustomTextBlock.Style>
+                                </my:CustomTextBlock>
+                            </Grid>
+                        </HierarchicalDataTemplate>
+                    </TreeView.ItemTemplate>
+                </TreeView>
+            </Grid>
+
+            <GridSplitter Grid.Column="1" HorizontalAlignment="Center" Width="5" ShowsPreview="True"/>
+
+            <Grid Grid.Column="2">
+                <ListView x:Name="TvProgramList" ItemsSource="{Binding Path=FiltratedItems, Mode=OneWay}"
+                          SelectionMode="Extended" GridViewColumnHeader.Click="GridViewColumnHeaderClickedHandler"
+                          Background="{Binding CurrentColorSet.ListViewBackground, Mode=OneWay}"
+                          Foreground="{Binding CurrentColorSet.ListViewForeground, Mode=OneWay}"
+                          Padding="-2,0"
+                          >
+                    <ListView.Resources>
+                        <Style x:Key="{x:Type ListViewItem}" TargetType="{x:Type ListViewItem}" BasedOn="{StaticResource {x:Type ListBoxItem}}" >
+                            <Setter Property="Template" Value="{StaticResource ResourceKey=CustomListViewItemControlTemplate}" />
+                        </Style>
+                    </ListView.Resources>
+                    <!--ListView.InputBindings>
+                        <MouseBinding Gesture="LeftDoubleClick" Command="{Binding Path=OpenProgramCommand}"/>
+                    </ListView.InputBindings-->
+                    <ListView.CommandBindings>
+                        <CommandBinding Command="Delete" CanExecute="DeleteProgramCommandBinding_CanExecute"  Executed="DeleteProgramCommandBinding_Executed"/>
+                    </ListView.CommandBindings>
+                    <ListView.ItemContainerStyle>
+                        <Style TargetType="{x:Type ListViewItem}" BasedOn="{StaticResource ResourceKey={x:Type ListViewItem}}">
+                            <Setter Property="Height" Value="20"/>
+                            <Setter Property="IsSelected" Value="{Binding Path=IsSelected, Mode=TwoWay}"/>
+                            <Setter Property="ContextMenu">
+                                <Setter.Value>
+                                    <ContextMenu>
+                                        <MenuItem Header="{x:Static properties:Resources.List_View}" Command="Open"/>
+                                        <MenuItem Header="{x:Static properties:Resources.List_MakeViewed}" Command="{x:Static myvm:DataContextClass.MakeViewed}"/>
+                                        <MenuItem Header="{x:Static properties:Resources.List_MakeUnviewed}" Command="{x:Static myvm:DataContextClass.MakeUnviewed}"/>
+                                        <MenuItem Header="{x:Static properties:Resources.List_SelectAll}" Command="SelectAll"/>
+                                        <MenuItem Header="{x:Static properties:Resources.List_DeleteProgram}" Command="Delete"/>
+                                    </ContextMenu>
+                                </Setter.Value>
+                            </Setter>
+                            <EventSetter Event="Loaded" Handler="listViewItem_Loaded"/>
+                            <EventSetter Event="PreviewMouseLeftButtonDown"  Handler="listViewItem_PreviewMouseLeftButtonDown"/>
+                        </Style>
+                    </ListView.ItemContainerStyle>
+                    <ListView.View>
+                        <GridView>
+                            <GridView.ColumnHeaderContainerStyle>
+                                <Style TargetType="GridViewColumnHeader">
+                                    <Setter Property="Background">
+                                        <Setter.Value>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                                <GradientStop Color="#FFFFFFFF" Offset="0.0" />
+                                                <GradientStop Color="#FFF6F9FC" Offset="0.2" />
+                                                <GradientStop Color="#FFEEF3F9" Offset="1.0" />
+                                            </LinearGradientBrush>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Setter Property="Foreground" Value="#FF000000"/>
+                                    <!--Setter Property="Background" Value="{Binding CurrentColorSet.GridViewBackground, Mode=OneWay}"/>
+                                    <Setter Property="Foreground" Value="{Binding CurrentColorSet.GridViewForeground, Mode=OneWay}"/-->
+                                    <!--Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#FFFF8000"/>
+                                            <Setter Property="Foreground" Value="#FF000000"/>
+                                        </Trigger>
+                                    </Style.Triggers-->
+                                </Style>
+                            </GridView.ColumnHeaderContainerStyle>
+                            <GridViewColumn DisplayMemberBinding="{Binding Path=Status}" Header="{x:Static properties:Resources.Grid_Viewed}"/>
+                            <GridViewColumn DisplayMemberBinding="{Binding Path=Contents_Title}" Header="{x:Static properties:Resources.Grid_Title}"/>
+                            <GridViewColumn DisplayMemberBinding="{Binding Path=Program_StartDateTime, StringFormat=yyyy-MM-dd\ HH:mm:ss}" Header="{x:Static properties:Resources.Grid_StartDateTime}"/>
+                            <GridViewColumn DisplayMemberBinding="{Binding Path=Program_Length}" Header="{x:Static properties:Resources.Grid_LengthMinute}"/>
+                            <GridViewColumn DisplayMemberBinding="{Binding Path=Program_Station}" Header="{x:Static properties:Resources.Grid_Station}"/>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </Grid>
+        </Grid>
+        <Grid Grid.Row="2" x:Name="StatusGrd">
+            <StatusBar x:Name="StatusBar">
+                <StatusBar.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                        </Grid>
+                    </ItemsPanelTemplate>
+                </StatusBar.ItemsPanel>
+                <StatusBarItem>
+                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                        <Label Content="{Binding Path=FilterResultNumberString, Mode=OneWay}"/>
+                        <Label xml:space="preserve">/</Label>
+                        <Label Content="{Binding Path=AllNumberString, Mode=OneWay}"/>
+                    </StackPanel>
+                </StatusBarItem>
+                <StatusBarItem Grid.Column="1"/>
+                <StatusBarItem Grid.Column="2">
+                    <ProgressBar Height="10" Width="100" Maximum="1" Value="{Binding Path=SearchProgress, Mode=OneWay}" Visibility="{Binding Path=ProgressVisibility, Mode=OneWay}"/>
+                </StatusBarItem>
+            </StatusBar>
+        </Grid>
+    </Grid>
+</RibbonWindow>
